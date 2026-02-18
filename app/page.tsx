@@ -5,7 +5,6 @@ import { CommandHeader } from "@/components/command-header"
 import { TacticalMap } from "@/components/tactical-map"
 import { IncidentFeed } from "@/components/incident-feed"
 import { TerminalDock } from "@/components/terminal-dock"
-import { AiChatbot } from "@/components/ai-chatbot"
 import { AgentBriefings } from "@/components/agent-briefings"
 
 export default function EcoOpsCommandCenter() {
@@ -24,44 +23,40 @@ export default function EcoOpsCommandCenter() {
   }, [dispatchArmed])
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-eco-bg hex-grid-bg relative">
+    <div className="w-screen flex flex-col bg-eco-bg hex-grid-bg relative">
       {/* CRT Scanlines */}
       <div className="crt-scanlines" />
 
-      {/* Header */}
-      <CommandHeader
-        threatLevel={threatLevel}
-        dispatchArmed={dispatchArmed}
-        onDispatch={handleDispatch}
-      />
-
-      {/* Main Body - Map + Incident Feed */}
-      <div className="flex flex-1 min-h-0">
-        {/* Center Map */}
-        <div className="flex-1 p-2">
-          <TacticalMap />
-        </div>
-
-        {/* Right Sidebar - Incident Feed */}
-        <IncidentFeed />
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50">
+        <CommandHeader
+          threatLevel={threatLevel}
+          dispatchArmed={dispatchArmed}
+          onDispatch={handleDispatch}
+        />
       </div>
 
-      {/* Bottom Dock - Three Panel Layout */}
-      <div className="h-[30vh] flex border-t border-eco-border">
-        {/* Left: Agent Briefings */}
-        <div className="w-80">
-          <AgentBriefings />
-        </div>
-
-        {/* Center: Field Terminal */}
-        <div className="flex-1">
+      {/* Section 1: Three Column Layout (viewport height minus header) */}
+      <div className="flex h-[calc(100vh-56px)] min-h-[500px] border-b border-eco-border">
+        {/* Left: Field Operative Terminal (Chat) */}
+        <div className="flex-1 min-w-0">
           <TerminalDock onSeverityArmed={handleSeverityArmed} />
         </div>
 
-        {/* Right: AI Chatbot */}
-        <div className="w-80">
-          <AiChatbot />
+        {/* Center: Agent Briefings */}
+        <div className="w-[360px] border-x border-eco-border">
+          <AgentBriefings />
         </div>
+
+        {/* Right: Global Incident Feed */}
+        <div className="w-[300px]">
+          <IncidentFeed />
+        </div>
+      </div>
+
+      {/* Section 2: Tactical Map (scrollable) */}
+      <div className="h-[80vh] min-h-[500px]">
+        <TacticalMap />
       </div>
     </div>
   )

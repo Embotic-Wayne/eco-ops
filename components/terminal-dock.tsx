@@ -202,7 +202,7 @@ export function TerminalDock({ onSeverityArmed }: TerminalDockProps) {
   }, [messages])
 
   return (
-    <div className="flex flex-col h-full border-x border-eco-border bg-eco-surface terminal-noise">
+    <div className="flex flex-col h-full bg-eco-surface terminal-noise">
       {/* Terminal Header */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-eco-border bg-eco-surface-2">
         <Terminal size={14} className="text-eco-green" />

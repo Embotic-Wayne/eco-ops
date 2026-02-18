@@ -215,7 +215,7 @@ function BriefingCard({ briefing, index }: { briefing: Briefing; index: number }
 
 export function AgentBriefings() {
   return (
-    <div className="flex flex-col h-full border-r border-eco-border bg-eco-surface terminal-noise">
+    <div className="flex flex-col h-full bg-eco-surface terminal-noise">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-eco-border bg-eco-surface-2">
         <FileText size={14} className="text-eco-amber" />

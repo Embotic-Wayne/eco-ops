@@ -47,7 +47,7 @@ function getIcon(icon: string) {
 
 export function IncidentFeed() {
   return (
-    <div className="flex flex-col w-72 border-l border-eco-border bg-eco-surface">
+    <div className="flex flex-col h-full bg-eco-surface border-l border-eco-border">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-eco-border bg-eco-surface-2">
         <AlertTriangle size={14} className="text-eco-amber" />
