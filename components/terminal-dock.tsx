@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, Terminal, ChevronRight, ShieldAlert } from "lucide-react"
 
@@ -13,42 +13,6 @@ interface ChatMessage {
     level: number
     label: string
   }
-}
-
-const initialMessages: ChatMessage[] = [
-  {
-    id: 1,
-    role: "user",
-    text: "EcoOps, run proximity analysis on wildfire WF-7721 relative to settlement Alpha.",
-  },
-  {
-    id: 2,
-    role: "ai",
-    text: "Acknowledged. Initiating multi-layer geospatial scan. Cross-referencing MODIS thermal data with real-time wind vectors...",
-    hasWaveform: true,
-  },
-  {
-    id: 3,
-    role: "user",
-    text: "What is the current threat radius?",
-  },
-  {
-    id: 4,
-    role: "ai",
-    text: "Fire front advancing at 2.3 km/h. Wind shear from northwest at 41 kn gusts. Projecting 90-minute encroachment on settlement Alpha perimeter.",
-    hasWaveform: true,
-  },
-]
-
-const finalAiMessage: ChatMessage = {
-  id: 5,
-  role: "ai",
-  text: "Situation analyzed. Wildfire proximity critical. Settlement Alpha evacuation window closing.",
-  hasWaveform: true,
-  severityWidget: {
-    level: 9,
-    label: "CRITICAL",
-  },
 }
 
 function AudioWaveform() {
@@ -76,20 +40,9 @@ function AudioWaveform() {
 interface SeverityWidgetProps {
   level: number
   label: string
-  onArmed: () => void
 }
 
-function SeverityWidget({ level, label, onArmed }: SeverityWidgetProps) {
-  const [armed, setArmed] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setArmed(true)
-      onArmed()
-    }, 1200)
-    return () => clearTimeout(timer)
-  }, [onArmed])
-
+function SeverityWidget({ level, label }: SeverityWidgetProps) {
   return (
     <motion.div
       className="relative my-2"
@@ -97,52 +50,17 @@ function SeverityWidget({ level, label, onArmed }: SeverityWidgetProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Arming connector */}
-      <AnimatePresence>
-        {armed && (
-          <motion.div
-            className="absolute -top-8 left-1/2 -translate-x-1/2 flex flex-col items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <motion.div
-              className="w-[2px] h-6 bg-gradient-to-t from-eco-green to-transparent"
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              style={{ transformOrigin: "bottom" }}
-            />
-            <motion.span
-              className="text-[7px] font-mono text-eco-green tracking-widest"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 1, 0.5, 1] }}
-              transition={{ duration: 1, delay: 0.5 }}
-            >
-              ARMING DISPATCH
-            </motion.span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <motion.div
-        className={`
-          flex items-center gap-3 px-4 py-3 rounded-sm border
-          ${armed ? "border-[#ff3b3b]/60 bg-[#ff3b3b]/10" : "border-eco-border bg-eco-surface-2"}
-        `}
-        animate={
-          armed
-            ? {
-                borderColor: ["rgba(255,59,59,0.6)", "rgba(255,59,59,0.3)", "rgba(255,59,59,0.6)"],
-                boxShadow: [
-                  "0 0 10px rgba(255,59,59,0.2), inset 0 0 10px rgba(255,59,59,0.05)",
-                  "0 0 20px rgba(255,59,59,0.3), inset 0 0 15px rgba(255,59,59,0.08)",
-                  "0 0 10px rgba(255,59,59,0.2), inset 0 0 10px rgba(255,59,59,0.05)",
-                ],
-              }
-            : {}
-        }
-        transition={armed ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : undefined}
+        className="flex items-center gap-3 px-4 py-3 rounded-sm border border-[#ff3b3b]/60 bg-[#ff3b3b]/10"
+        animate={{
+          borderColor: ["rgba(255,59,59,0.6)", "rgba(255,59,59,0.3)", "rgba(255,59,59,0.6)"],
+          boxShadow: [
+            "0 0 10px rgba(255,59,59,0.2), inset 0 0 10px rgba(255,59,59,0.05)",
+            "0 0 20px rgba(255,59,59,0.3), inset 0 0 15px rgba(255,59,59,0.08)",
+            "0 0 10px rgba(255,59,59,0.2), inset 0 0 10px rgba(255,59,59,0.05)",
+          ],
+        }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       >
         <ShieldAlert size={18} className="text-[#ff3b3b]" />
         <div className="flex flex-col">
@@ -153,46 +71,76 @@ function SeverityWidget({ level, label, onArmed }: SeverityWidgetProps) {
             LEVEL {level} ({label})
           </span>
         </div>
-        <AnimatePresence>
-          {armed && (
-            <motion.div
-              className="ml-auto flex items-center gap-1.5"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.8 }}
-            >
-              <motion.div
-                className="w-2 h-2 rounded-full bg-eco-green"
-                animate={{ opacity: [1, 0.3, 1], scale: [1, 1.3, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
-              />
-              <span className="text-[8px] font-mono font-bold tracking-widest text-eco-green glow-green-text">
-                DISPATCH ARMED
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <motion.div
+          className="ml-auto flex items-center gap-1.5"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <motion.div
+            className="w-2 h-2 rounded-full bg-eco-green"
+            animate={{ opacity: [1, 0.3, 1], scale: [1, 1.3, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+          <span className="text-[8px] font-mono font-bold tracking-widest text-eco-green glow-green-text">
+            DISPATCH ARMED
+          </span>
+        </motion.div>
       </motion.div>
     </motion.div>
   )
 }
 
-interface TerminalDockProps {
-  onSeverityArmed: () => void
+function getSeverityLabel(level: number): string {
+  if (level <= 3) return "LOW"
+  if (level <= 6) return "ELEVATED"
+  if (level <= 8) return "HIGH"
+  return "CRITICAL"
 }
 
-export function TerminalDock({ onSeverityArmed }: TerminalDockProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
-  const [showFinal, setShowFinal] = useState(false)
-  const [inputValue, setInputValue] = useState("")
-  const scrollRef = useRef<HTMLDivElement>(null)
+interface TerminalDockProps {
+  onSeverityResult?: (data: { severity: number; final_report?: string; action_plan?: string[] }) => void
+  onAgentStep?: (step: string, payload?: any) => void
+  onReset?: () => void
+}
 
+export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: TerminalDockProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [inputValue, setInputValue] = useState("")
+  const [isListening, setIsListening] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const messageIdRef = useRef(1)
+
+  // Initialize Web Speech API
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowFinal(true)
-      setMessages((prev) => [...prev, finalAiMessage])
-    }, 2000)
-    return () => clearTimeout(timer)
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition()
+        recognition.continuous = false
+        recognition.interimResults = false
+        recognition.lang = "en-US"
+
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = event.results[0][0].transcript
+          setInputValue(transcript)
+          setIsListening(false)
+        }
+
+        recognition.onerror = (event: any) => {
+          console.error("Speech recognition error:", event.error)
+          setIsListening(false)
+        }
+
+        recognition.onend = () => {
+          setIsListening(false)
+        }
+
+        recognitionRef.current = recognition
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -200,6 +148,163 @@ export function TerminalDock({ onSeverityArmed }: TerminalDockProps) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
+
+  const handleMicClick = useCallback(() => {
+    if (recognitionRef.current) {
+      if (isListening) {
+        recognitionRef.current.stop()
+        setIsListening(false)
+      } else {
+        recognitionRef.current.start()
+        setIsListening(true)
+      }
+    }
+  }, [isListening])
+
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isProcessing) return
+
+    // Reset agent outputs for new analysis
+    onReset?.()
+
+    const userMessage: ChatMessage = {
+      id: messageIdRef.current++,
+      role: "user",
+      text: text.trim(),
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+    setInputValue("")
+    setIsProcessing(true)
+
+    // Add placeholder AI message
+    const aiMessageId = messageIdRef.current++
+    const placeholderMessage: ChatMessage = {
+      id: aiMessageId,
+      role: "ai",
+      text: "Analyzing incident...",
+      hasWaveform: true,
+    }
+    setMessages((prev) => [...prev, placeholderMessage])
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: text.trim() }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      if (!reader) {
+        throw new Error("No response body")
+      }
+
+      let finalPayload: any = null
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() || ""
+
+        for (const line of lines) {
+          if (!line.trim()) continue
+
+          try {
+            const event = JSON.parse(line)
+            
+            if (event.step === "end") {
+              finalPayload = event.payload
+            } else if (event.step && event.step !== "error") {
+              // Notify agent step completion with payload
+              onAgentStep?.(event.step, event.payload)
+            }
+          } catch (e) {
+            console.error("Failed to parse event:", e, line)
+          }
+        }
+      }
+
+      // Update AI message with brief summary (detailed outputs are in Reasoning Logs)
+      if (finalPayload) {
+        const summaryText = finalPayload.severity
+          ? `Analysis complete. Severity Level ${finalPayload.severity}/10 (${getSeverityLabel(finalPayload.severity)}). See Reasoning Logs for detailed assessment.`
+          : "Analysis complete. See Reasoning Logs for detailed assessment."
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMessageId
+              ? {
+                  ...msg,
+                  text: summaryText,
+                  hasWaveform: false,
+                  severityWidget: finalPayload.severity
+                    ? {
+                        level: finalPayload.severity,
+                        label: getSeverityLabel(finalPayload.severity),
+                      }
+                    : undefined,
+                }
+              : msg
+          )
+        )
+
+        // Call severity result callback
+        if (finalPayload.severity) {
+          onSeverityResult?.({
+            severity: finalPayload.severity,
+            final_report: finalPayload.final_report,
+            action_plan: finalPayload.action_plan,
+          })
+        }
+      } else {
+        // Remove placeholder if no final payload
+        setMessages((prev) => prev.filter((msg) => msg.id !== aiMessageId))
+      }
+    } catch (error) {
+      console.error("Error sending message:", error)
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMessageId
+            ? {
+                ...msg,
+                text: "Error processing request. Please try again.",
+                hasWaveform: false,
+              }
+            : msg
+        )
+      )
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [isProcessing, onSeverityResult, onAgentStep, onReset])
+
+  const handleSend = useCallback(() => {
+    if (inputValue.trim()) {
+      sendMessage(inputValue)
+    }
+  }, [inputValue, sendMessage])
+
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault()
+        handleSend()
+      }
+    },
+    [handleSend]
+  )
 
   return (
     <div className="flex flex-col h-full border-x border-eco-border bg-eco-surface terminal-noise">
@@ -221,12 +326,18 @@ export function TerminalDock({ onSeverityArmed }: TerminalDockProps) {
         ref={scrollRef}
         className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-3 inset-panel mx-2 mt-2 mb-0 rounded-sm bg-eco-bg/50"
       >
-        <div className="flex-1" />
-        {messages.map((msg, i) => (
+        {messages.length === 0 && (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-xs font-mono text-eco-text-dim text-center">
+              Click the mic or type a message to report an environmental incident.
+            </p>
+          </div>
+        )}
+        {messages.map((msg) => (
           <motion.div
             key={msg.id}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            initial={msg.id > 4 ? { opacity: 0, y: 10 } : { opacity: 1 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
@@ -248,11 +359,10 @@ export function TerminalDock({ onSeverityArmed }: TerminalDockProps) {
                 {msg.hasWaveform && <AudioWaveform />}
               </div>
               {msg.text}
-              {msg.severityWidget && showFinal && (
+              {msg.severityWidget && (
                 <SeverityWidget
                   level={msg.severityWidget.level}
                   label={msg.severityWidget.label}
-                  onArmed={onSeverityArmed}
                 />
               )}
             </div>
@@ -268,25 +378,48 @@ export function TerminalDock({ onSeverityArmed }: TerminalDockProps) {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter command..."
-            className="flex-1 bg-transparent text-xs font-mono text-eco-text placeholder:text-eco-text-dim/50 outline-none"
+            onKeyPress={handleKeyPress}
+            placeholder="Enter command or click mic..."
+            disabled={isProcessing}
+            className="flex-1 bg-transparent text-xs font-mono text-eco-text placeholder:text-eco-text-dim/50 outline-none disabled:opacity-50"
           />
         </div>
         <motion.button
-          className="relative flex items-center justify-center w-10 h-10 rounded-sm bg-eco-green/15 border border-eco-green/40 text-eco-green cursor-pointer"
-          whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(43,255,136,0.3)" }}
-          whileTap={{ scale: 0.95 }}
-          animate={{
-            boxShadow: [
-              "0 0 8px rgba(43,255,136,0.2)",
-              "0 0 16px rgba(43,255,136,0.35)",
-              "0 0 8px rgba(43,255,136,0.2)",
-            ],
-          }}
+          onClick={handleMicClick}
+          disabled={isProcessing || !recognitionRef.current}
+          className={`relative flex items-center justify-center w-10 h-10 rounded-sm border cursor-pointer ${
+            isListening
+              ? "bg-eco-red/20 border-eco-red/60 text-eco-red"
+              : "bg-eco-green/15 border-eco-green/40 text-eco-green"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          whileHover={!isProcessing && recognitionRef.current ? { scale: 1.05 } : {}}
+          whileTap={!isProcessing && recognitionRef.current ? { scale: 0.95 } : {}}
+          animate={
+            !isListening && !isProcessing && recognitionRef.current
+              ? {
+                  boxShadow: [
+                    "0 0 8px rgba(43,255,136,0.2)",
+                    "0 0 16px rgba(43,255,136,0.35)",
+                    "0 0 8px rgba(43,255,136,0.2)",
+                  ],
+                }
+              : {}
+          }
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         >
           <Mic size={18} />
         </motion.button>
+        {inputValue.trim() && (
+          <motion.button
+            onClick={handleSend}
+            disabled={isProcessing}
+            className="px-3 py-2 text-xs font-mono text-eco-green border border-eco-green/40 bg-eco-green/10 rounded-sm hover:bg-eco-green/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            SEND
+          </motion.button>
+        )}
       </div>
     </div>
   )

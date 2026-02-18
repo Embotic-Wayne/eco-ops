@@ -6,20 +6,67 @@ import { TacticalMap } from "@/components/tactical-map"
 import { IncidentFeed } from "@/components/incident-feed"
 import { TerminalDock } from "@/components/terminal-dock"
 import { AiChatbot } from "@/components/ai-chatbot"
-import { AgentBriefings } from "@/components/agent-briefings"
+import { ReasoningLogs } from "@/components/reasoning-logs"
+
+interface AgentOutputs {
+  impact?: {
+    severity?: number
+    population_affected?: number
+    hazard_data?: { type: string; location: string }
+  }
+  action?: {
+    action_plan?: string[]
+    greenpt_score?: number
+  }
+  briefing?: {
+    final_report?: string
+  }
+}
 
 export default function EcoOpsCommandCenter() {
   const [threatLevel, setThreatLevel] = useState(6)
   const [dispatchArmed, setDispatchArmed] = useState(false)
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
+  const [currentStep, setCurrentStep] = useState<string | null>(null)
+  const [agentOutputs, setAgentOutputs] = useState<AgentOutputs>({})
 
-  const handleSeverityArmed = useCallback(() => {
-    setThreatLevel(9)
-    setDispatchArmed(true)
+  const handleSeverityResult = useCallback(
+    (data: { severity: number; final_report?: string; action_plan?: string[] }) => {
+      setThreatLevel(data.severity)
+      setDispatchArmed(true)
+    },
+    []
+  )
+
+  const handleAgentStep = useCallback((step: string, payload?: any) => {
+    setCurrentStep(step)
+    
+    // Store agent output
+    if (payload) {
+      setAgentOutputs((prev) => ({
+        ...prev,
+        [step]: payload,
+      }))
+    }
+    
+    // Mark step as completed after a brief delay
+    setTimeout(() => {
+      setCompletedSteps((prev) => new Set([...prev, step]))
+      setCurrentStep(null)
+    }, 500)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setCompletedSteps(new Set())
+    setCurrentStep(null)
+    setAgentOutputs({})
+    setDispatchArmed(false)
   }, [])
 
   const handleDispatch = useCallback(() => {
     if (dispatchArmed) {
       // Dispatch action
+      console.log("Dispatching response unit...")
     }
   }, [dispatchArmed])
 
@@ -48,14 +95,22 @@ export default function EcoOpsCommandCenter() {
 
       {/* Bottom Dock - Three Panel Layout */}
       <div className="h-[30vh] flex border-t border-eco-border">
-        {/* Left: Agent Briefings */}
+        {/* Left: Reasoning Logs */}
         <div className="w-80">
-          <AgentBriefings />
+          <ReasoningLogs 
+            completedSteps={completedSteps} 
+            currentStep={currentStep}
+            agentOutputs={agentOutputs}
+          />
         </div>
 
         {/* Center: Field Terminal */}
         <div className="flex-1">
-          <TerminalDock onSeverityArmed={handleSeverityArmed} />
+          <TerminalDock
+            onSeverityResult={handleSeverityResult}
+            onAgentStep={handleAgentStep}
+            onReset={handleReset}
+          />
         </div>
 
         {/* Right: AI Chatbot */}
