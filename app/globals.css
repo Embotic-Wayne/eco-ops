@@ -1,0 +1,245 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --eco-green: #2bff88;
+  --eco-amber: #ffb020;
+  --eco-blue: #37b8ff;
+  --eco-red: #ff3b3b;
+  --eco-bg: #0a0a0f;
+  --eco-surface: #111118;
+  --eco-surface-2: #1a1a24;
+  --eco-border: #2a2a3a;
+  --eco-text: #e0e0e8;
+  --eco-text-dim: #6a6a7a;
+
+  --background: #0a0a0f;
+  --foreground: #e0e0e8;
+  --card: #111118;
+  --card-foreground: #e0e0e8;
+  --popover: #111118;
+  --popover-foreground: #e0e0e8;
+  --primary: #2bff88;
+  --primary-foreground: #0a0a0f;
+  --secondary: #1a1a24;
+  --secondary-foreground: #e0e0e8;
+  --muted: #1a1a24;
+  --muted-foreground: #6a6a7a;
+  --accent: #37b8ff;
+  --accent-foreground: #0a0a0f;
+  --destructive: #ff3b3b;
+  --destructive-foreground: #0a0a0f;
+  --border: #2a2a3a;
+  --input: #2a2a3a;
+  --ring: #2bff88;
+  --radius: 0.375rem;
+}
+
+@theme inline {
+  --font-sans: var(--font-chakra), 'Chakra Petch', sans-serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --color-eco-green: var(--eco-green);
+  --color-eco-amber: var(--eco-amber);
+  --color-eco-blue: var(--eco-blue);
+  --color-eco-red: var(--eco-red);
+  --color-eco-bg: var(--eco-bg);
+  --color-eco-surface: var(--eco-surface);
+  --color-eco-surface-2: var(--eco-surface-2);
+  --color-eco-border: var(--eco-border);
+  --color-eco-text: var(--eco-text);
+  --color-eco-text-dim: var(--eco-text-dim);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* CRT Scanlines overlay */
+.crt-scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+/* Hex grid background pattern */
+.hex-grid-bg {
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(43, 255, 136, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(55, 184, 255, 0.03) 0%, transparent 50%);
+  background-size: 100% 100%;
+}
+
+.hex-grid-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill='none' stroke='%232a2a3a' stroke-width='0.5' opacity='0.15'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Carbon fiber texture */
+.carbon-fiber {
+  background-image:
+    linear-gradient(45deg, rgba(255,255,255,0.02) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,0.02) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.02) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.02) 75%);
+  background-size: 4px 4px;
+  background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+}
+
+/* Glow effects */
+.glow-green {
+  box-shadow: 0 0 15px rgba(43, 255, 136, 0.3), 0 0 40px rgba(43, 255, 136, 0.1);
+}
+
+.glow-green-text {
+  text-shadow: 0 0 10px rgba(43, 255, 136, 0.5), 0 0 20px rgba(43, 255, 136, 0.2);
+}
+
+.glow-amber {
+  box-shadow: 0 0 15px rgba(255, 176, 32, 0.3), 0 0 40px rgba(255, 176, 32, 0.1);
+}
+
+.glow-amber-text {
+  text-shadow: 0 0 10px rgba(255, 176, 32, 0.5), 0 0 20px rgba(255, 176, 32, 0.2);
+}
+
+.glow-blue {
+  box-shadow: 0 0 15px rgba(55, 184, 255, 0.3), 0 0 40px rgba(55, 184, 255, 0.1);
+}
+
+.glow-blue-text {
+  text-shadow: 0 0 10px rgba(55, 184, 255, 0.5), 0 0 20px rgba(55, 184, 255, 0.2);
+}
+
+.glow-red {
+  box-shadow: 0 0 15px rgba(255, 59, 59, 0.3), 0 0 40px rgba(255, 59, 59, 0.1);
+}
+
+.glow-red-text {
+  text-shadow: 0 0 10px rgba(255, 59, 59, 0.5), 0 0 20px rgba(255, 59, 59, 0.2);
+}
+
+/* Terminal noise */
+.terminal-noise {
+  position: relative;
+}
+.terminal-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Beveled panel */
+.bevel-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.12);
+  border-left-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(0, 0, 0, 0.3);
+  border-right-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Inset panel */
+.inset-panel {
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-top-color: rgba(0, 0, 0, 0.5);
+  border-left-color: rgba(0, 0, 0, 0.4);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-right-color: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Pulse animation for dispatch button */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(43, 255, 136, 0.4), 0 0 30px rgba(43, 255, 136, 0.2), 0 0 60px rgba(43, 255, 136, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(43, 255, 136, 0.6), 0 0 50px rgba(43, 255, 136, 0.3), 0 0 80px rgba(43, 255, 136, 0.15);
+  }
+}
+
+.pulse-glow-green {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* Tactical grid for map */
+.tactical-grid {
+  background-image:
+    linear-gradient(rgba(55, 184, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(55, 184, 255, 0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(43, 255, 136, 0.3);
+  border-radius: 2px;
+}
+
+/* Arming connector line */
+@keyframes arm-trace {
+  0% { height: 0; opacity: 0; }
+  30% { opacity: 1; }
+  100% { height: 100%; opacity: 1; }
+}
+
+.arm-trace {
+  animation: arm-trace 1s ease-out forwards;
+}
+
+/* Waveform animation */
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
