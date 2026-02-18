@@ -58,7 +58,7 @@ export function ReasoningLogs({ completedSteps = new Set(), currentStep = null, 
       </div>
 
       {/* Agent Steps */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 flex flex-col gap-3">
         {agentSteps.map((step, index) => {
           const isCompleted = completedSteps.has(step.id)
           const isActive = currentStep === step.id && !isCompleted
@@ -215,9 +215,9 @@ export function ReasoningLogs({ completedSteps = new Set(), currentStep = null, 
                   {step.id === "briefing" && output && output.final_report && (
                     <div className="text-[9px] font-mono">
                       <span className="text-eco-text-dim text-[8px] uppercase tracking-wider mb-1 block">Final Report:</span>
-                      <p className="text-eco-text leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
+                      <div className="text-eco-text leading-relaxed whitespace-pre-wrap overflow-y-auto max-h-[400px] hide-scrollbar">
                         {output.final_report}
-                      </p>
+                      </div>
                     </div>
                   )}
                 </motion.div>

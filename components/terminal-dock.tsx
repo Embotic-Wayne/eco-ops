@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mic, Terminal, ChevronRight, ShieldAlert } from "lucide-react"
+import { speakText } from "@/lib/utils/speech"
 
 interface ChatMessage {
   id: number
@@ -99,7 +100,7 @@ function getSeverityLabel(level: number): string {
 }
 
 interface TerminalDockProps {
-  onSeverityResult?: (data: { severity: number; final_report?: string; action_plan?: string[] }) => void
+  onSeverityResult?: (data: { severity: number; final_report?: string; action_plan?: string[]; hazard_data?: { type: string; location: string } }) => void
   onAgentStep?: (step: string, payload?: any) => void
   onReset?: () => void
 }
@@ -112,6 +113,7 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
   const scrollRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const messageIdRef = useRef(1)
+  const finalTranscriptRef = useRef("")
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -119,23 +121,46 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition()
-        recognition.continuous = false
-        recognition.interimResults = false
+        recognition.continuous = true
+        recognition.interimResults = true
         recognition.lang = "en-US"
 
         recognition.onresult = (event: SpeechRecognitionEvent) => {
-          const transcript = event.results[0][0].transcript
-          setInputValue(transcript)
-          setIsListening(false)
+          let interimTranscript = ""
+          
+          // Process all results
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript
+            if (event.results[i].isFinal) {
+              finalTranscriptRef.current += transcript + " "
+            } else {
+              interimTranscript += transcript
+            }
+          }
+          
+          // Update input with interim results while speaking, final when done
+          if (interimTranscript) {
+            setInputValue(finalTranscriptRef.current + interimTranscript)
+          } else if (finalTranscriptRef.current) {
+            setInputValue(finalTranscriptRef.current.trim())
+          }
         }
 
         recognition.onerror = (event: any) => {
           console.error("Speech recognition error:", event.error)
-          setIsListening(false)
+          // Only stop listening on certain errors
+          if (event.error === "no-speech" || event.error === "aborted") {
+            setIsListening(false)
+          }
         }
 
         recognition.onend = () => {
           setIsListening(false)
+          // Ensure final transcript is set
+          if (finalTranscriptRef.current.trim()) {
+            setInputValue(finalTranscriptRef.current.trim())
+          }
+          finalTranscriptRef.current = ""
         }
 
         recognitionRef.current = recognition
@@ -152,14 +177,19 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
   const handleMicClick = useCallback(() => {
     if (recognitionRef.current) {
       if (isListening) {
+        // Stop recording gracefully - allow final results to be processed
+        finalTranscriptRef.current = inputValue // Preserve current input
         recognitionRef.current.stop()
-        setIsListening(false)
+        // The onend handler will finalize the transcript
       } else {
+        // Start fresh recording
+        finalTranscriptRef.current = ""
+        setInputValue("")
         recognitionRef.current.start()
         setIsListening(true)
       }
     }
-  }, [isListening])
+  }, [isListening, inputValue])
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isProcessing) return
@@ -209,6 +239,7 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
       }
 
       let finalPayload: any = null
+      let clarificationQuestion: string | null = null
 
       while (true) {
         const { done, value } = await reader.read()
@@ -226,8 +257,23 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
             
             if (event.step === "end") {
               finalPayload = event.payload
-            } else if (event.step && event.step !== "error") {
-              // Notify agent step completion with payload
+            } else if (event.step === "clarification" && event.payload?.question) {
+              clarificationQuestion = event.payload.question
+              // Show the follow-up question immediately
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === aiMessageId
+                    ? {
+                        ...msg,
+                        text: event.payload.question,
+                        hasWaveform: false,
+                      }
+                    : msg
+                )
+              )
+              // Speak the clarification question out loud
+              void speakText(event.payload.question, { rate: 0.95, pitch: 1.0 })
+            } else if (event.step && event.step !== "error" && event.step !== "clarification") {
               onAgentStep?.(event.step, event.payload)
             }
           } catch (e) {
@@ -236,20 +282,22 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
         }
       }
 
-      // Update AI message with brief summary (detailed outputs are in Reasoning Logs)
-      if (finalPayload) {
-        const summaryText = finalPayload.severity
-          ? `Analysis complete. Severity Level ${finalPayload.severity}/10 (${getSeverityLabel(finalPayload.severity)}). See Reasoning Logs for detailed assessment.`
-          : "Analysis complete. See Reasoning Logs for detailed assessment."
+      // Finalize AI message: keep clarification question as main text, add severity widget if we have it
+      if (finalPayload || clarificationQuestion) {
+        const displayText =
+          clarificationQuestion ||
+          (finalPayload?.severity
+            ? `Analysis complete. Severity Level ${finalPayload.severity}/10 (${getSeverityLabel(finalPayload.severity)}). See Reasoning Logs for details.`
+            : "Analysis complete. See Reasoning Logs for detailed assessment.")
 
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === aiMessageId
               ? {
                   ...msg,
-                  text: summaryText,
+                  text: displayText,
                   hasWaveform: false,
-                  severityWidget: finalPayload.severity
+                  severityWidget: finalPayload?.severity
                     ? {
                         level: finalPayload.severity,
                         label: getSeverityLabel(finalPayload.severity),
@@ -266,6 +314,7 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
             severity: finalPayload.severity,
             final_report: finalPayload.final_report,
             action_plan: finalPayload.action_plan,
+            hazard_data: finalPayload.hazard_data,
           })
         }
       } else {

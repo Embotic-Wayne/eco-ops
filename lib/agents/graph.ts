@@ -1,6 +1,7 @@
 import { StateGraph, END, START, Annotation } from "@langchain/langgraph"
 import { BaseMessage } from "@langchain/core/messages"
-import { GraphState, HazardData } from "./state"
+import { HazardData } from "./state"
+import { clarificationNode } from "./nodes/clarification"
 import { impactNode } from "./nodes/impact"
 import { actionNode } from "./nodes/action"
 import { briefingNode } from "./nodes/briefing"
@@ -49,18 +50,24 @@ const StateAnnotation = Annotation.Root({
     },
     default: () => [],
   }),
+  clarification_question: Annotation<string | undefined>({
+    reducer: (left: string | undefined, right: string | undefined) => right ?? left,
+    default: () => undefined,
+  }),
 })
 
 // Define the graph workflow
 const workflow = new StateGraph(StateAnnotation)
 
 // Add nodes
+workflow.addNode("clarification", clarificationNode)
 workflow.addNode("impact", impactNode)
 workflow.addNode("action", actionNode)
 workflow.addNode("briefing", briefingNode)
 
-// Define the sequential flow: START -> impact -> action -> briefing -> END
-workflow.addEdge(START, "impact")
+// Define the sequential flow: START -> clarification -> impact -> action -> briefing -> END
+workflow.addEdge(START, "clarification")
+workflow.addEdge("clarification", "impact")
 workflow.addEdge("impact", "action")
 workflow.addEdge("action", "briefing")
 workflow.addEdge("briefing", END)

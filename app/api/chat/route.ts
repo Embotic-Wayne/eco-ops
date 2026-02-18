@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
               
               // Prepare payload based on node type
               let payload: any = {}
-              if (nodeName === "impact") {
+              if (nodeName === "clarification") {
+                payload = { question: nodeUpdate.clarification_question }
+              } else if (nodeName === "impact") {
                 payload = {
                   severity: nodeUpdate.severity,
                   population_affected: nodeUpdate.population_affected,

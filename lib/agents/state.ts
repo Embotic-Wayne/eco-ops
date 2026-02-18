@@ -7,6 +7,7 @@ export interface HazardData {
 
 export interface GraphState {
   messages: BaseMessage[]
+  clarification_question?: string
   hazard_data?: HazardData
   severity?: number // 1-10
   population_affected?: number

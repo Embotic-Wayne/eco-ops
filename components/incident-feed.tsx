@@ -1,26 +1,18 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { AlertTriangle, Flame, Droplets, CloudRain, ThermometerSun } from "lucide-react"
+import { AlertTriangle, Flame, Droplets, CloudRain, ThermometerSun, CheckCircle2 } from "lucide-react"
 
-interface Incident {
+export interface Incident {
   id: string
   time: string
   severity: "critical" | "high" | "elevated" | "low"
   message: string
   icon: "fire" | "flood" | "air" | "storm" | "heat"
+  dispatched?: boolean
+  latitude?: number
+  longitude?: number
 }
-
-const incidents: Incident[] = [
-  { id: "WF-7721", time: "14:32:07", severity: "critical", message: "Wildfire spread rate accelerating — Zone 7 perimeter breached", icon: "fire" },
-  { id: "AQ-1190", time: "14:28:45", severity: "elevated", message: "PM2.5 readings 3x threshold in downtown corridor", icon: "air" },
-  { id: "FLD-3302", time: "14:25:12", severity: "high", message: "River gauge Station Delta exceeding flood stage +2.1m", icon: "flood" },
-  { id: "ST-4410", time: "14:21:33", severity: "elevated", message: "Severe thunderstorm warning — rotating supercell detected", icon: "storm" },
-  { id: "HT-5501", time: "14:18:09", severity: "low", message: "Urban heat island effect nominal — monitoring stations green", icon: "heat" },
-  { id: "WF-7722", time: "14:14:55", severity: "critical", message: "Evacuation recommended — fire line approaching settlement Alpha", icon: "fire" },
-  { id: "FLD-3303", time: "14:10:41", severity: "high", message: "Levee integrity compromised — Sector 12 at risk", icon: "flood" },
-  { id: "AQ-1191", time: "14:07:22", severity: "elevated", message: "Smoke plume drift modeling indicates southern migration", icon: "air" },
-]
 
 function getSeverityStyles(severity: string) {
   switch (severity) {
@@ -45,9 +37,30 @@ function getIcon(icon: string) {
   }
 }
 
-export function IncidentFeed() {
+function severityFromLevel(level: number): "critical" | "high" | "elevated" | "low" {
+  if (level <= 3) return "low"
+  if (level <= 6) return "elevated"
+  if (level <= 8) return "high"
+  return "critical"
+}
+
+function iconFromHazardType(type: string): "fire" | "flood" | "air" | "storm" | "heat" {
+  const t = type?.toLowerCase() ?? ""
+  if (t.includes("fire") || t.includes("wildfire")) return "fire"
+  if (t.includes("flood") || t.includes("water") || t.includes("river") || t.includes("leak")) return "flood"
+  if (t.includes("air") || t.includes("quality") || t.includes("chemical")) return "air"
+  if (t.includes("storm") || t.includes("weather")) return "storm"
+  if (t.includes("heat")) return "heat"
+  return "fire"
+}
+
+interface IncidentFeedProps {
+  incidents?: Incident[]
+}
+
+export function IncidentFeed({ incidents = [] }: IncidentFeedProps) {
   return (
-    <div className="flex flex-col w-72 border-l border-eco-border bg-eco-surface">
+    <div className="flex flex-col flex-1 min-w-0 border-l border-eco-border bg-eco-surface">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-eco-border bg-eco-surface-2">
         <AlertTriangle size={14} className="text-eco-amber" />
@@ -63,38 +76,56 @@ export function IncidentFeed() {
 
       {/* Feed */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1.5">
-        {incidents.map((incident, i) => {
-          const styles = getSeverityStyles(incident.severity)
-          return (
-            <motion.div
-              key={incident.id}
-              className={`p-2.5 rounded-sm border ${styles.border} ${styles.bg} transition-colors`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1, duration: 0.3 }}
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className={styles.text}>{getIcon(incident.icon)}</span>
-                <span className={`text-[9px] font-mono font-bold tracking-wider ${styles.text}`}>
-                  {incident.id}
-                </span>
-                <span className="ml-auto text-[8px] font-mono text-eco-text-dim">
-                  {incident.time}
-                </span>
-              </div>
-              <p className="text-[10px] font-mono leading-relaxed text-eco-text/80">
-                {incident.message}
-              </p>
-              <div className="mt-1.5 flex items-center gap-1.5">
-                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: styles.dot }} />
-                <span className={`text-[8px] font-mono font-bold tracking-widest uppercase ${styles.text}`}>
-                  {incident.severity}
-                </span>
-              </div>
-            </motion.div>
-          )
-        })}
+        {incidents.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center py-8">
+            <p className="text-xs font-mono text-eco-text-dim text-center px-4">
+              Reported incidents will appear here.
+            </p>
+          </div>
+        ) : (
+          incidents.map((incident, i) => {
+            const styles = getSeverityStyles(incident.severity)
+            return (
+              <motion.div
+                key={incident.id}
+                className={`p-2.5 rounded-sm border ${styles.border} ${styles.bg} transition-colors`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.3 }}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className={styles.text}>{getIcon(incident.icon)}</span>
+                  <span className={`text-[9px] font-mono font-bold tracking-wider ${styles.text}`}>
+                    {incident.id}
+                  </span>
+                  <span className="ml-auto text-[8px] font-mono text-eco-text-dim">
+                    {incident.time}
+                  </span>
+                </div>
+                <p className="text-[10px] font-mono leading-relaxed text-eco-text/80">
+                  {incident.message}
+                </p>
+                <div className="mt-1.5 flex items-center justify-between gap-1.5 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1 h-1 rounded-full" style={{ backgroundColor: styles.dot }} />
+                    <span className={`text-[8px] font-mono font-bold tracking-widest uppercase ${styles.text}`}>
+                      {incident.severity}
+                    </span>
+                  </div>
+                  {incident.dispatched && (
+                    <span className="flex items-center gap-1 text-[8px] font-mono font-bold tracking-widest text-eco-green">
+                      <CheckCircle2 size={10} />
+                      DISPATCHED
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            )
+          })
+        )}
       </div>
     </div>
   )
 }
+
+export { severityFromLevel, iconFromHazardType }
