@@ -103,17 +103,31 @@ interface TerminalDockProps {
   onSeverityResult?: (data: { severity: number; final_report?: string; action_plan?: string[]; hazard_data?: { type: string; location: string } }) => void
   onAgentStep?: (step: string, payload?: any) => void
   onReset?: () => void
+  onProvider?: (provider: string) => void
 }
 
-export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: TerminalDockProps) {
+export function TerminalDock({ onSeverityResult, onAgentStep, onReset, onProvider }: TerminalDockProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isListening, setIsListening] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const messageIdRef = useRef(1)
   const finalTranscriptRef = useRef("")
+
+  const MIN_INPUT_ROWS = 1
+  const MAX_INPUT_ROWS = 6
+
+  const resizeInput = useCallback(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = "auto"
+    const lineHeight = 20
+    const rows = Math.min(MAX_INPUT_ROWS, Math.max(MIN_INPUT_ROWS, Math.ceil(el.scrollHeight / lineHeight)))
+    el.style.height = `${rows * lineHeight}px`
+  }, [])
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -317,6 +331,10 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
             hazard_data: finalPayload.hazard_data,
           })
         }
+        // Sponsor track: notify when analysis used GreenPT
+        if (finalPayload.provider) {
+          onProvider?.(finalPayload.provider)
+        }
       } else {
         // Remove placeholder if no final payload
         setMessages((prev) => prev.filter((msg) => msg.id !== aiMessageId))
@@ -337,7 +355,7 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
     } finally {
       setIsProcessing(false)
     }
-  }, [isProcessing, onSeverityResult, onAgentStep, onReset])
+  }, [isProcessing, onSeverityResult, onAgentStep, onReset, onProvider])
 
   const handleSend = useCallback(() => {
     if (inputValue.trim()) {
@@ -345,8 +363,8 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
     }
   }, [inputValue, sendMessage])
 
-  const handleKeyPress = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault()
         handleSend()
@@ -354,6 +372,10 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
     },
     [handleSend]
   )
+
+  useEffect(() => {
+    resizeInput()
+  }, [inputValue, resizeInput])
 
   return (
     <div className="flex flex-col h-full border-x border-eco-border bg-eco-surface terminal-noise">
@@ -392,7 +414,7 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
           >
             <div
               className={`
-                max-w-[75%] px-3 py-2 rounded-sm text-[11px] font-mono leading-relaxed
+                max-w-[75%] min-w-0 px-3 py-2 rounded-sm text-[11px] font-mono leading-relaxed break-words
                 ${msg.role === "user"
                   ? "bg-eco-blue/10 border border-eco-blue/20 text-eco-blue ml-auto"
                   : "bg-eco-green/5 border border-eco-green/15 text-eco-text"
@@ -407,7 +429,7 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
                 </span>
                 {msg.hasWaveform && <AudioWaveform />}
               </div>
-              {msg.text}
+              <span className="whitespace-pre-wrap break-words">{msg.text}</span>
               {msg.severityWidget && (
                 <SeverityWidget
                   level={msg.severityWidget.level}
@@ -420,17 +442,18 @@ export function TerminalDock({ onSeverityResult, onAgentStep, onReset }: Termina
       </div>
 
       {/* Input Row */}
-      <div className="flex items-center gap-3 p-3 mx-2 mb-2 mt-2">
-        <div className="flex items-center gap-2 flex-1 px-3 py-2 bg-eco-bg border border-eco-border rounded-sm bevel-panel">
-          <ChevronRight size={14} className="text-eco-green/60" />
-          <input
-            type="text"
+      <div className="flex items-end gap-3 p-3 mx-2 mb-2 mt-2 min-w-0">
+        <div className="flex items-end gap-2 flex-1 min-w-0 px-3 py-2 bg-eco-bg border border-eco-border rounded-sm bevel-panel">
+          <ChevronRight size={14} className="text-eco-green/60 shrink-0 mb-1.5" />
+          <textarea
+            ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Enter command or click mic..."
             disabled={isProcessing}
-            className="flex-1 bg-transparent text-xs font-mono text-eco-text placeholder:text-eco-text-dim/50 outline-none disabled:opacity-50"
+            rows={MIN_INPUT_ROWS}
+            className="flex-1 min-w-0 w-full min-h-[20px] max-h-[120px] resize-none overflow-y-auto hide-scrollbar bg-transparent text-xs font-mono text-eco-text placeholder:text-eco-text-dim/50 outline-none disabled:opacity-50 py-0"
           />
         </div>
         <motion.button

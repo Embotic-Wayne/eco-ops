@@ -2,7 +2,7 @@
  * Text-to-Speech utility.
  *
  * Primary: Fish Audio via our server route (`/api/tts`) for consistent quality.
- * Fallback: Browser Web Speech API (speechSynthesis) if the route fails.
+ * No fallback: If Fish Audio fails, we log and stay silent to avoid overlapping voices.
  */
 
 let currentAudio: HTMLAudioElement | null = null
@@ -26,25 +26,6 @@ function cleanupAudio() {
     }
     currentObjectUrl = null
   }
-}
-
-function speakViaBrowserTts(text: string, options?: { rate?: number; pitch?: number; volume?: number }) {
-  if (typeof window === "undefined") return
-  window.speechSynthesis.cancel()
-
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.rate = options?.rate ?? 1.0
-  utterance.pitch = options?.pitch ?? 1.0
-  utterance.volume = options?.volume ?? 0.8
-
-  const voices = window.speechSynthesis.getVoices?.() ?? []
-  const preferred =
-    voices.find((v) => v.lang?.startsWith("en") && v.name?.includes("Microsoft")) ||
-    voices.find((v) => v.lang?.startsWith("en")) ||
-    undefined
-  if (preferred) utterance.voice = preferred
-
-  window.speechSynthesis.speak(utterance)
 }
 
 export async function speakText(
@@ -92,24 +73,21 @@ export async function speakText(
     audio.onerror = (e) => {
       console.error("[TTS] Audio playback error:", e)
       cleanupAudio()
-      speakViaBrowserTts(trimmed, options)
     }
 
     audio.oncanplaythrough = () => {
       console.log("[TTS] Audio ready to play")
     }
 
-    // Some browsers require a user gesture; if this fails we'll fallback.
+    // Some browsers require a user gesture; if this fails we'll stay silent.
     await audio.play().catch((e) => {
       console.error("[TTS] Audio play() failed:", e)
       cleanupAudio()
-      speakViaBrowserTts(trimmed, options)
     })
 
     console.log("[TTS] Fish Audio playback started successfully")
   } catch (error) {
-    console.error("[TTS] Fish Audio failed, falling back to browser TTS:", error)
-    speakViaBrowserTts(trimmed, options)
+    console.error("[TTS] Fish Audio failed (no fallback):", error)
   }
 }
 

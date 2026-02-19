@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { HumanMessage } from "@langchain/core/messages"
 import { graph } from "@/lib/agents/graph"
 import { GraphState } from "@/lib/agents/state"
+import { isUsingGreenPT } from "@/lib/agents/llm"
 
 export const runtime = "nodejs"
 export const maxDuration = 60 // 60 seconds max for streaming
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
           // Use accumulated state as final state
           const finalState = currentState
 
-          // Send final payload
+          // Send final payload (include provider for sponsor track badge)
           const finalEvent = {
             step: "end",
             payload: {
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
               greenpt_score: finalState.greenpt_score,
               hazard_data: finalState.hazard_data,
               population_affected: finalState.population_affected,
+              ...(isUsingGreenPT() ? { provider: "greenpt" as const } : {}),
             },
           }
           controller.enqueue(encoder.encode(JSON.stringify(finalEvent) + "\n"))

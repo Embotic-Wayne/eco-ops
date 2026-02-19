@@ -7,6 +7,7 @@ interface CommandHeaderProps {
   threatLevel: number
   dispatchArmed: boolean
   onDispatch: () => void
+  useGreenPT?: boolean
 }
 
 function getThreatColor(level: number) {
@@ -16,16 +17,38 @@ function getThreatColor(level: number) {
   return { color: "#ff3b3b", label: "CRITICAL", class: "glow-red" }
 }
 
-export function CommandHeader({ threatLevel, dispatchArmed, onDispatch }: CommandHeaderProps) {
+export function CommandHeader({ threatLevel, dispatchArmed, onDispatch, useGreenPT }: CommandHeaderProps) {
   const threat = getThreatColor(threatLevel)
 
   return (
     <header className="relative flex items-center justify-between px-6 py-3 border-b border-eco-border bg-eco-surface carbon-fiber">
       {/* Left: Title */}
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-lg font-bold tracking-wider text-eco-green glow-green-text font-sans uppercase">
-          EcoOps Command Center
-        </h1>
+        <div className="flex items-center gap-2">
+          <img
+            src="/ecoops-logo.svg"
+            alt=""
+            className="h-7 w-7 shrink-0 object-contain"
+          />
+          <h1 className="text-lg font-bold tracking-wider text-eco-green glow-green-text font-sans uppercase">
+            EcoOps Command Center
+          </h1>
+          {useGreenPT && (
+            <a
+              href="https://greenpt.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[9px] font-mono px-2 py-1 rounded border border-eco-green/40 bg-eco-green/10 text-eco-green hover:bg-eco-green/20 transition-colors"
+            >
+              <img
+                src="/greenpt-logo.svg"
+                alt=""
+                className="h-4 w-4 object-contain"
+              />
+              Powered by GreenPT
+            </a>
+          )}
+        </div>
         <p className="text-[10px] font-mono tracking-[0.2em] text-eco-text-dim uppercase">
           Tactical Environmental Response Interface
         </p>
