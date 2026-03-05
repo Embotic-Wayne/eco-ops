@@ -1,4 +1,4 @@
-**Inspiration**
+## **Inspiration**
 Environmental responders are the first line of defense against ecological disasters, but they are often overwhelmed by chaotic, fragmented data during a crisis. The mental load of manually sorting through reports, mapping locations, and prioritizing hazards creates a massive bottleneck when every second counts.
 
 We built EcoOps to be the "calm in the storm." 🧘‍♂️ Instead of forcing responders to juggle multiple forms and manual data entry, our platform acts as a digital partner that absorbs the chaos—summarizing reports and generating action plans automatically. Our goal is to reduce the stress on the human behind the screen, allowing them to focus on making life-saving decisions for the enviornment instead of fighting with software. 🌳
