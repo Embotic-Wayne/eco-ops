@@ -46,7 +46,8 @@ First Hackathon where I felt that I had a clear vision of what I wanted to make
 
 🔒 The importance of server-side API proxying for sensitive TTS and AI keys.
 
-## **What's next for Eco-Ops** 📟 Real Dispatch: Connecting the "Dispatch" button to PagerDuty or CAD systems.
+## **What's next for Eco-Ops** 
+📟 Real Dispatch: Connecting the "Dispatch" button to PagerDuty or CAD systems.
 
 📜 Adding computer vision to detect dangers and threats for faster responses.
 
